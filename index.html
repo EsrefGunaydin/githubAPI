@@ -21,10 +21,32 @@
       <form method="POST">
         <input type="text" placeholder="https://api.github.com/" disabled />
         <input type="text" name="url" placeholder="Enter owner/reponame" />
-        <button type="submit">Submit</button>
+        <button id="submitQuery" type="submit">Submit</button>
       </form>
     </div>
 
-    <script src="" async defer></script>
+    <h3>Show Pull Requests and No.#Commits</h3>
+    <div id="results"></div>
+    <script>
+        let results = document.getElementById("results");
+        let submitBtn = document.getElementById("submitQuery");
+        let fetchData = fetch("/api/pullrequests");
+        fetchData
+          .then((res) => res.json())
+          .then((data) => {
+            var pulls = data.map((item) => {
+              return `<div>
+              <p>Title: ${item.title}</p>
+              <p>URL: <a href="${item.url}">${item.url}</a></p>
+              <p>ID: ${item.id}</p>
+              <p>Number Of Commits: ${item.numberOfCommits}</p>
+              </div>`;
+            });
+            results.innerHTML = pulls;
+          });
+        submitBtn.addEventlistener("click", fetchData());
+    </script>
+      <script src="" async defer>
+    
   </body>
 </html>
