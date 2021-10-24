@@ -1,6 +1,8 @@
 const http = require("http");
+const url = require("url");
 const fs = require("fs");
 const axios = require("axios");
+const { report } = require("process");
 const PORT = 8000;
 
 http
@@ -10,11 +12,30 @@ http
       fs.readFile("./index.html", null, (err, data) => {
         if (err) {
           res.writeHead(404);
-          res.write("File was not found");
+          res.end("File was not found");
         } else {
-          res.write(data);
+          res.end(data);
         }
-        res.end();
+      });
+    }
+
+    //Get the form input for Github URL address
+    if (req.url === "/" && req.method === "POST") {
+      var body = "";
+      req.on("data", (data) => {
+        body += data;
+      });
+
+      req.on("end", () => {
+        const searchParams = new URLSearchParams(body);
+        const query = url.parse(searchParams.toString(), true);
+        console.log(query);
+
+        //Slice the url coming from form
+        const endPos = query.path.indexOf("%");
+        owner = query.path.slice(4, endPos);
+        repoName = query.path.slice(endPos + 3);
+        console.log(owner, repoName);
       });
     }
 
