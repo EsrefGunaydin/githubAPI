@@ -3,7 +3,12 @@ const url = require("url");
 const fs = require("fs");
 const axios = require("axios");
 const { report } = require("process");
+
+// Form inputs && Variables
 const PORT = 8000;
+var owner = "";
+var repoName = "";
+const apiURL = `https://api.github.com/repos/`;
 
 http
   .createServer((req, res) => {
@@ -37,6 +42,27 @@ http
         repoName = query.path.slice(endPos + 3);
         console.log(owner, repoName);
       });
+    }
+
+    //REST API endpoint for pull requests and commits
+    if (req.url === "/api/pullrequests") {
+      // PR async function
+      const getPullRequests = async (owner, repo) => {
+        try {
+          let response = await axios.get(`${apiURL}/${owner}/${repo}/pulls?q=is:open+is:Apr`);
+          const allRequests = response.data;
+          return allRequests;
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
+      getPullRequests(owner, repoName)
+        .then((result) => {
+          res.write(200, { "Content-type": "application/json" });
+          res.end(JSON.stringify(result));
+        })
+        .catch((err) => console.log(err));
     }
 
     console.log(`Server is working on port: ${PORT}`);
