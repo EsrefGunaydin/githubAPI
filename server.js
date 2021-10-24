@@ -8,7 +8,18 @@ const { report } = require("process");
 const PORT = 8000;
 var owner = "";
 var repoName = "";
-const apiURL = `https://api.github.com/repos/`;
+const apiURL = `https://api.github.com/repos`;
+
+// Helper function
+const getCommits = async (url) => {
+  try {
+    let response = await axios.get(url);
+    return response.data;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+};
 
 http
   .createServer((req, res) => {
@@ -51,7 +62,17 @@ http
         try {
           let response = await axios.get(`${apiURL}/${owner}/${repo}/pulls?q=is:open+is:Apr`);
           const allRequests = response.data;
-          return allRequests;
+          let resultPromises = allRequests.map(async (singleRequest) => {
+            let commits = await getCommits(singleRequest.commits_url); // check single pr url
+            let commitCount = commits.length;
+            return {
+              title: singleRequest.title,
+              url: singleRequest.url,
+              id: singleRequest.id,
+              numberOfCommits: commitCount,
+            };
+          });
+          return Promise.all(resultPromises);
         } catch (error) {
           console.log(error);
         }
@@ -59,7 +80,7 @@ http
 
       getPullRequests(owner, repoName)
         .then((result) => {
-          res.write(200, { "Content-type": "application/json" });
+          res.writeHead(200, { "Content-type": "application/json" });
           res.end(JSON.stringify(result));
         })
         .catch((err) => console.log(err));
