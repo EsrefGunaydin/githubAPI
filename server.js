@@ -2,24 +2,13 @@ const http = require("http");
 const url = require("url");
 const fs = require("fs");
 const axios = require("axios");
-const { report } = require("process");
+const { getCommits } = require("./utilities");
 
 // Form inputs && Variables
 const PORT = 8000;
 var owner = "";
 var repoName = "";
 const apiURL = `https://api.github.com/repos`;
-
-// Helper function
-const getCommits = async (url) => {
-  try {
-    let response = await axios.get(url);
-    return response.data;
-  } catch (err) {
-    console.log(err);
-    return null;
-  }
-};
 
 http
   .createServer((req, res) => {
@@ -45,7 +34,6 @@ http
       req.on("end", () => {
         const searchParams = new URLSearchParams(body);
         const query = url.parse(searchParams.toString(), true);
-        console.log(query);
 
         //Slice the url coming from form
         const endPos = query.path.indexOf("%");
@@ -62,8 +50,10 @@ http
         try {
           let response = await axios.get(`${apiURL}/${owner}/${repo}/pulls?q=is:open+is:Apr`);
           const allRequests = response.data;
-          let resultPromises = allRequests.map(async (singleRequest) => {
-            let commits = await getCommits(singleRequest.commits_url); // check single pr url
+
+          // Loop thru all PR url addresses
+          let allPromises = allRequests.map(async (singleRequest) => {
+            let commits = await getCommits(singleRequest.commits_url);
             let commitCount = commits.length;
             return {
               title: singleRequest.title,
@@ -72,7 +62,7 @@ http
               numberOfCommits: commitCount,
             };
           });
-          return Promise.all(resultPromises);
+          return Promise.all(allPromises);
         } catch (error) {
           console.log(error);
         }
